@@ -25,9 +25,14 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
 
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
+#      '/store/relval/CMSSW_8_0_14/DoubleEG/RAW-RECO/ZElectron-80X_dataRun2_relval_v15_RelVal_doubEG2016B-v1/10000/1ADA6A0A-EB4A-E611-AF74-0025905A612C.root',
+#        '/store/relval/CMSSW_8_1_0_pre9/RelValProdMinBias_13/AODSIM/81X_mcRun2_asymptotic_v2-v1/10000/0E584269-FE52-E611-993E-0CC47A4C8E0E.root',
       #'/store/mc/Run2015D/DoubleEG/AOD/04Dec2015-v1/10000/04D11E1B-BB9E-E511-AC1A-047D7B881D62.root',
       #'/store/data/Run2016B/DoubleEG/AOD/PromptReco-v2/000/273/158/00000/006772B7-E019-E611-AEBE-02163E014583.root',
-      '/store/data/Run2016C/DoubleEG/AOD/PromptReco-v2/000/275/657/00000/0AE1FDE0-673B-E611-9ECF-02163E011A27.root',
+      #'/store/data/Run2016C/DoubleEG/AOD/PromptReco-v2/000/275/603/00000/0C964C97-893A-E611-B3D2-02163E0128F1.root',
+      #'/store/data/Run2016C/DoubleEG/AOD/PromptReco-v2/000/275/601/00000/D211B105-753A-E611-A7B0-02163E013668.root',
+      #'/store/data/Run2016C/DoubleEG/AOD/PromptReco-v2/000/275/657/00000/0AE1FDE0-673B-E611-9ECF-02163E011A27.root',
+'/store/data/Run2016C/DoubleEG/AOD/PromptReco-v2/000/275/657/00000/0AE1FDE0-673B-E611-9ECF-02163E011A27.root',
     ),
     #firstEvent = cms.untracked.uint32(0)
 )
@@ -76,7 +81,7 @@ process.out = cms.OutputModule("PoolOutputModule",
     outputCommands = cms.untracked.vstring(
         'drop *',
         'keep *_offline*PrimaryVertices*_*_*',
-        'keep *_*lectron*_*_*',
+        'keep *_gsfElectrons*_*_*',
         'keep *_selectedPatPhotons*_*_*',
         'keep *_*hoton*_*_*',
         'keep *_selectedPatJets*_*_*',
@@ -99,8 +104,9 @@ if not runOnMC:
 from PhysicsTools.SelectorUtils.tools.vid_id_tools import switchOnVIDPhotonIdProducer, setupVIDPhotonSelection, setupAllVIDIdsInModule, DataFormat
 
 switchOnVIDPhotonIdProducer(process, DataFormat.AOD)
-setupAllVIDIdsInModule(process, 'RecoEgamma.PhotonIdentification.Identification.mvaPhotonID_PHYS14_PU20bx25_nonTrig_V1_cff', setupVIDPhotonSelection)
+#setupAllVIDIdsInModule(process, 'RecoEgamma.PhotonIdentification.Identification.mvaPhotonID_PHYS14_PU20bx25_nonTrig_V1_cff', setupVIDPhotonSelection)
 #setupAllVIDIdsInModule(process, 'RecoEgamma.PhotonIdentification.Identification.mvaPhotonID_Spring15_25ns_nonTrig_V2_cff', setupVIDPhotonSelection)
+setupAllVIDIdsInModule(process, 'RecoEgamma.PhotonIdentification.Identification.mvaPhotonID_Spring15_25ns_nonTrig_V2p1_cff', setupVIDPhotonSelection)
 
 #########################
 #       Analysis        #
@@ -115,7 +121,6 @@ process.TFileService = cms.Service("TFileService",
 
 process.gggg_aod.TriggersList = process.hltFilter.HLTPaths
 process.gggg_aod.RunOnMC = cms.untracked.bool(runOnMC)
-#process.gggg_aod.outfilename = cms.untracked.string('output.root')
 process.gggg_aod.fetchProtons = cms.bool(True)
 
 process.p = cms.Path(

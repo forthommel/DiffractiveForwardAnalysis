@@ -32,7 +32,8 @@ process.source = cms.Source("PoolSource",
       #'/store/data/Run2016C/DoubleEG/AOD/PromptReco-v2/000/275/603/00000/0C964C97-893A-E611-B3D2-02163E0128F1.root',
       #'/store/data/Run2016C/DoubleEG/AOD/PromptReco-v2/000/275/601/00000/D211B105-753A-E611-A7B0-02163E013668.root',
       #'/store/data/Run2016C/DoubleEG/AOD/PromptReco-v2/000/275/657/00000/0AE1FDE0-673B-E611-9ECF-02163E011A27.root',
-'/store/data/Run2016C/DoubleEG/AOD/PromptReco-v2/000/275/657/00000/0AE1FDE0-673B-E611-9ECF-02163E011A27.root',
+#'/store/data/Run2016C/DoubleEG/AOD/PromptReco-v2/000/275/657/00000/0AE1FDE0-673B-E611-9ECF-02163E011A27.root',
+'/store/data/Run2016B/DoubleEG/AOD/01Jul2016-v1/00000/04D8B592-B745-E611-80F9-02163E0148EE.root'
     ),
     #firstEvent = cms.untracked.uint32(0)
 )

@@ -236,8 +236,8 @@ std::cerr << "photon pair with mass=" << photon_pair.M() << std::endl;
 bool
 GammaGammaGammaGamma::passPhotonId(const edm::Ptr< pat::Photon >& photon_ref) const
 {
-  //const bool pass_medium = (*fPhotonMediumIdDecisions)[photon_ref->photonCore()];
-  const bool pass_medium = true;
+  const bool pass_medium = (*fPhotonMediumIdDecisions)[photon_ref->photonCore()];
+  //const bool pass_medium = true;
 
   return pass_medium;
 }

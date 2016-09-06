@@ -90,7 +90,7 @@
 #include <TH1D.h>
 
 #define MAX_HLT    10   // Maximum number of HLT to check
-#define MAX_LL     50   // Maximum number of leptons per event
+/*#define MAX_LL     50   // Maximum number of leptons per event
 #define MAX_MUONS  25   // Maximum number of muons per event
 #define MAX_ELE    25   // Maximum number of electrons per event
 #define MAX_PHO    50   // Maximum number of photons per event
@@ -103,7 +103,7 @@
 #define MAX_GENPRO 8    // Maximum number of generator level protons per event
 #define MAX_JETS   30   // Maximum number of jets per event
 #define MAX_LOCALPCAND 10 // Maximum number of reconstructed local tracks in RPs
-#define MAX_LOCALPPAIRCAND 5 // Maximum number of reconstructed local tracks pairs in RPs
+#define MAX_LOCALPPAIRCAND 5 // Maximum number of reconstructed local tracks pairs in RPs*/
 
 #define MASS_MU 0.1057
 #define MASS_E  0.000511
@@ -127,7 +127,6 @@ class GammaGammaLL : public edm::EDAnalyzer {
    private:
       virtual void beginJob() ;
       virtual void analyze(const edm::Event&, const edm::EventSetup&);
-      virtual void analyzeMCEventContent(const edm::Event&);
       virtual void endJob() ;
 
       virtual void beginRun(edm::Run const&, edm::EventSetup const&);
@@ -136,6 +135,9 @@ class GammaGammaLL : public edm::EDAnalyzer {
       virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
       
       virtual void lookAtTriggers(const edm::Event&, const edm::EventSetup&);
+      virtual void analyzeMCEventContent(const edm::Event&);
+      virtual void extractElectrons(const edm::Event&, std::map<int, TLorentzVector>*);
+      virtual void extractMuons(const edm::Event&, std::map<int, TLorentzVector>*);
       void clearTree();
 
       // ----------member data ---------------------------
@@ -203,39 +205,18 @@ class GammaGammaLL : public edm::EDAnalyzer {
       int HLT_Accept[MAX_HLT], HLT_Prescl[MAX_HLT];
       //char* HLT_Name[MAX_HLT];
       std::vector<std::string>* HLT_Name;
-      //std::map<int,std::string>* HLT_Name;
-      /*int nHLTLeptonCand[MAX_HLT];
-      double HLTLeptonCand_pt[2][MAX_HLT];
-      double HLTLeptonCand_eta[2][MAX_HLT];
-      double HLTLeptonCand_phi[2][MAX_HLT];
-      int HLTLeptonCand_charge[2][MAX_HLT];
-      int HLT_LeadingLepton[MAX_HLT], HLT_TrailingLepton[MAX_HLT];
-      int HLT_LeadingLepton_Prescl[MAX_HLT], HLT_TrailingLepton_Prescl[MAX_HLT];*/
       
       // Generator level quantities
-      int nGenMuonCand, nGenMuonCandOutOfAccept;
-      double GenMuonCand_px[MAX_GENMU], GenMuonCand_py[MAX_GENMU], GenMuonCand_pz[MAX_GENMU];
-      double GenMuonCand_p[MAX_GENMU], GenMuonCand_pt[MAX_GENMU];
-      double GenMuonCand_eta[MAX_GENMU], GenMuonCand_phi[MAX_GENMU];
-      int nGenEleCand, nGenEleCandOutOfAccept;
-      double GenEleCand_px[MAX_GENELE], GenEleCand_py[MAX_GENELE], GenEleCand_pz[MAX_GENELE];
-      double GenEleCand_p[MAX_GENELE], GenEleCand_pt[MAX_GENELE];
-      double GenEleCand_eta[MAX_GENELE], GenEleCand_phi[MAX_GENELE];
-      double GenPair_p, GenPair_pt, GenPair_mass;
-      double GenPair_phi, GenPair_eta;
-      double GenPair_dphi, GenPair_dpt, GenPair_3Dangle;
-      int nGenPhotCand, nGenPhotCandOutOfAccept;
-      double GenPhotCand_p[MAX_GENPHO], GenPhotCand_e[MAX_GENPHO];
-      double GenPhotCand_pt[MAX_GENPHO], GenPhotCand_eta[MAX_GENPHO], GenPhotCand_phi[MAX_GENPHO];
-      int nGenProtCand;
-      double GenProtCand_p[MAX_GENPRO], GenProtCand_px[MAX_GENPRO], GenProtCand_py[MAX_GENPRO], GenProtCand_pz[MAX_GENPRO];
-      double GenProtCand_pt[MAX_GENPRO], GenProtCand_eta[MAX_GENPRO], GenProtCand_phi[MAX_GENPRO];
-      int GenProtCand_status[MAX_GENPRO];
+      int nGenMuonCandOutOfAccept, nGenEleCandOutOfAccept, nGenPhotCandOutOfAccept;
+      vector<double> GenMuonCand_px, GenMuonCand_py, GenMuonCand_pz, GenMuonCand_p, GenMuonCand_pt, GenMuonCand_eta, GenMuonCand_phi;
+      vector<double> GenEleCand_px, GenEleCand_py, GenEleCand_pz, GenEleCand_p, GenEleCand_pt, GenEleCand_eta, GenEleCand_phi;
+      double GenPair_p, GenPair_pt, GenPair_mass, GenPair_phi, GenPair_eta, GenPair_dphi, GenPair_dpt, GenPair_3Dangle;
+      vector<double> GenPhotCand_p, GenPhotCand_e, GenPhotCand_pt, GenPhotCand_eta, GenPhotCand_phi;
+      vector<double> GenProtCand_p, GenProtCand_px, GenProtCand_py, GenProtCand_pz, GenProtCand_pt, GenProtCand_eta, GenProtCand_phi;
+      vector<int> GenProtCand_status;
 
       // HPS quantities
       double xi, t;
-      double HPS_acc420b1, HPS_acc220b1, HPS_acc420and220b1, HPS_acc420or220b1; // beam 1 (clockwise)  
-      double HPS_acc420b2, HPS_acc220b2, HPS_acc420and220b2, HPS_acc420or220b2; // beam 2 (anti-clockwise)  
 
       int nLeptonCand, nLeptonsInPrimVertex, nCandidates, nCandidatesInEvent;
 
@@ -248,37 +229,28 @@ class GammaGammaLL : public edm::EDAnalyzer {
       double Weight;
 
       // Muon quantities
-      int nMuonCand;
-      double MuonCand_px[MAX_LL], MuonCand_py[MAX_LL], MuonCand_pz[MAX_LL];
-      double MuonCand_p[MAX_LL], MuonCand_pt[MAX_LL];
-      double MuonCand_eta[MAX_LL], MuonCand_phi[MAX_LL];
-      double MuonCand_vtxx[MAX_LL], MuonCand_vtxy[MAX_LL], MuonCand_vtxz[MAX_LL];
-      int MuonCand_charge[MAX_LL];
-      double MuonCand_dxy[MAX_LL], MuonCand_dz[MAX_LL];
-      int MuonCand_nstatseg[MAX_LL], MuonCand_npxlhits[MAX_LL], MuonCand_ntrklayers[MAX_LL];
-      double MuonCand_[MAX_LL];
-      int MuonCandTrack_nmuchits[MAX_LL];
-      double MuonCandTrack_chisq[MAX_LL];
-      int MuonCand_isglobal[MAX_LL], MuonCand_istracker[MAX_LL], MuonCand_isstandalone[MAX_LL], MuonCand_ispfmuon[MAX_LL];
-      int MuonCand_istight[MAX_LL];
+      vector<double> MuonCand_px, MuonCand_py, MuonCand_pz, MuonCand_p, MuonCand_pt, MuonCand_eta, MuonCand_phi;
+      vector<double> MuonCand_vtxx, MuonCand_vtxy, MuonCand_vtxz;
+      vector<int> MuonCand_charge;
+      vector<double> MuonCand_dxy, MuonCand_dz;
+      vector<int> MuonCand_nstatseg, MuonCand_npxlhits, MuonCand_ntrklayers;
+      vector<int> MuonCandTrack_nmuchits;
+      vector<double> MuonCandTrack_chisq;
+      vector<int> MuonCand_isglobal, MuonCand_istracker, MuonCand_isstandalone, MuonCand_ispfmuon, MuonCand_istight;
 
       // Electron quantities
       int nEleCand;
-      double EleCand_px[MAX_LL], EleCand_py[MAX_LL], EleCand_pz[MAX_LL];
-      double EleCand_p[MAX_LL], EleCand_e[MAX_LL], EleCand_et[MAX_LL];
-      double EleCand_eta[MAX_LL], EleCand_phi[MAX_LL];
-      double EleCand_vtxx[MAX_LL], EleCand_vtxy[MAX_LL], EleCand_vtxz[MAX_LL];
-      int EleCand_charge[MAX_LL];
-      double EleCandTrack_p[MAX_LL], EleCandTrack_pt[MAX_LL];
-      double EleCandTrack_eta[MAX_LL], EleCandTrack_phi[MAX_LL];
-      double EleCandTrack_vtxz[MAX_LL]; 
-      double EleCand_deltaPhi[MAX_LL], EleCand_deltaEta[MAX_LL];
-      double EleCand_HoverE[MAX_LL];
-      double EleCand_trackiso[MAX_LL], EleCand_ecaliso[MAX_LL], EleCand_hcaliso[MAX_LL];
-      double EleCand_sigmaIetaIeta[MAX_LL];
-      double EleCand_convDist[MAX_LL], EleCand_convDcot[MAX_LL];
-      int EleCand_ecalDriven[MAX_LL]; 
-      int EleCand_tightID[MAX_LL], EleCand_mediumID[MAX_LL], EleCand_looseID[MAX_LL];
+      vector<double> EleCand_px, EleCand_py, EleCand_pz, EleCand_p, EleCand_e, EleCand_et, EleCand_eta, EleCand_phi;
+      vector<double> EleCand_vtxx, EleCand_vtxy, EleCand_vtxz;
+      vector<int> EleCand_charge;
+      vector<double> EleCandTrack_p, EleCandTrack_pt, EleCandTrack_eta, EleCandTrack_phi;
+      vector<double> EleCandTrack_vtxz; 
+      vector<double> EleCand_deltaPhi, EleCand_deltaEta;
+      vector<double> EleCand_HoverE;
+      vector<double> EleCand_trackiso, EleCand_ecaliso, EleCand_hcaliso, EleCand_sigmaIetaIeta;
+      vector<double> EleCand_convDist, EleCand_convDcot;
+      vector<int> EleCand_ecalDriven;
+      vector<int> EleCand_tightID, EleCand_mediumID, EleCand_looseID;
       
       // Photon quantities
       int nPhotonCand;
@@ -288,64 +260,47 @@ class GammaGammaLL : public edm::EDAnalyzer {
       double PhotonCand_drtrue[MAX_PHO], PhotonCand_detatrue[MAX_PHO], PhotonCand_dphitrue[MAX_PHO];
       
       // Pair quantities
-      int Pair_candidates[MAX_PAIRS][2], Pair_lepton1[MAX_PAIRS], Pair_lepton2[MAX_PAIRS];
-      double Pair_mindist[MAX_PAIRS];
-      double Pair_p[MAX_PAIRS], Pair_pt[MAX_PAIRS], Pair_dpt[MAX_PAIRS];
-      double Pair_mass[MAX_PAIRS], Pair_dphi[MAX_PAIRS];
-      double Pair_eta[MAX_PAIRS], Pair_phi[MAX_PAIRS], Pair_3Dangle[MAX_PAIRS];
+      vector< pair<int, int> > Pair_candidates;
+      vector<int> Pair_lepton1, Pair_lepton2;
+      vector<double> Pair_mindist;
+      vector<double> Pair_p, Pair_pt, Pair_dpt, Pair_mass, Pair_dphi, Pair_eta, Pair_phi, Pair_3Dangle;
       double PairGamma_mass[MAX_PAIRS][MAX_PHO];
       // Extra tracks
-      int Pair_extratracks1mm[MAX_PAIRS], Pair_extratracks2mm[MAX_PAIRS];
-      int Pair_extratracks3mm[MAX_PAIRS], Pair_extratracks4mm[MAX_PAIRS];
-      int Pair_extratracks5mm[MAX_PAIRS], Pair_extratracks1cm[MAX_PAIRS];
-      int Pair_extratracks2cm[MAX_PAIRS], Pair_extratracks3cm[MAX_PAIRS];
-      int Pair_extratracks4cm[MAX_PAIRS], Pair_extratracks5cm[MAX_PAIRS];
-      int Pair_extratracks10cm[MAX_PAIRS];
+      vector<int> Pair_extratracks1mm, Pair_extratracks2mm, Pair_extratracks3mm,
+                  Pair_extratracks4mm, Pair_extratracks5mm, Pair_extratracks1cm,
+                  Pair_extratracks2cm, Pair_extratracks3cm, Pair_extratracks4cm,
+                  Pair_extratracks5cm, Pair_extratracks10cm;
       
       // Vertex quantities
-      int nPrimVertexCand;
-      int PrimVertexCand_id[MAX_VTX], PrimVertexCand_hasdil[MAX_VTX];
-      double PrimVertexCand_x[MAX_VTX], PrimVertexCand_y[MAX_VTX], PrimVertexCand_z[MAX_VTX];
-      int PrimVertexCand_tracks[MAX_VTX], PrimVertexCand_matchedtracks[MAX_VTX], PrimVertexCand_unmatchedtracks[MAX_VTX];
-      double PrimVertexCand_chi2[MAX_VTX];
-      int PrimVertexCand_ndof[MAX_VTX];
-      int nFilteredPrimVertexCand;
+      vector<int> PrimVertexCand_id, PrimVertexCand_hasdil;
+      vector<double> PrimVertexCand_x, PrimVertexCand_y, PrimVertexCand_z;
+      vector<int> PrimVertexCand_tracks, PrimVertexCand_matchedtracks, PrimVertexCand_unmatchedtracks;
+      vector<double> PrimVertexCand_chi2;
+      vector<int> PrimVertexCand_ndof;
       
       // Extra tracks on vertex quantities
-      int nExtraTracks;
-      int ExtraTrack_purity[MAX_ET], ExtraTrack_nhits[MAX_ET];
-      int ExtraTrack_charge[MAX_ET], ExtraTrack_ndof[MAX_ET];
-      int ExtraTrack_vtxId[MAX_ET];
-      double ExtraTrack_p[MAX_ET], ExtraTrack_pt[MAX_ET];
-      double ExtraTrack_px[MAX_ET], ExtraTrack_py[MAX_ET], ExtraTrack_pz[MAX_ET];
-      double ExtraTrack_eta[MAX_ET], ExtraTrack_phi[MAX_ET];
-      double ExtraTrack_chi2[MAX_ET];
-      double ExtraTrack_vtxdxyz[MAX_ET];
-      double ExtraTrack_vtxT[MAX_ET], ExtraTrack_vtxZ[MAX_ET];
-      double ExtraTrack_x[MAX_ET], ExtraTrack_y[MAX_ET], ExtraTrack_z[MAX_ET];
-      double ClosestExtraTrack_vtxdxyz[MAX_VTX], ClosestHighPurityExtraTrack_vtxdxyz[MAX_VTX];
-      int ClosestExtraTrack_id[MAX_VTX], ClosestHighPurityExtraTrack_id[MAX_VTX];
+      vector<int> ExtraTrack_purity, ExtraTrack_nhits, ExtraTrack_charge, ExtraTrack_ndof, ExtraTrack_vtxId;
+      vector<double> ExtraTrack_p, ExtraTrack_pt, ExtraTrack_px, ExtraTrack_py, ExtraTrack_pz, ExtraTrack_eta, ExtraTrack_phi;
+      vector<double> ExtraTrack_chi2;
+      vector<double> ExtraTrack_vtxdxyz, ExtraTrack_vtxT, ExtraTrack_vtxZ;
+      vector<double> ExtraTrack_x, ExtraTrack_y, ExtraTrack_z;
+      vector<double> ClosestExtraTrack_vtxdxyz, ClosestHighPurityExtraTrack_vtxdxyz;
+      vector<int> ClosestExtraTrack_id, ClosestHighPurityExtraTrack_id;
       int nQualityExtraTrack;
 
       // Jets/MET quantities
-      int nJetCand;
-      double JetCand_px[MAX_JETS], JetCand_py[MAX_JETS], JetCand_pz[MAX_JETS];
-      double JetCand_e[MAX_JETS], JetCand_eta[MAX_JETS], JetCand_phi[MAX_JETS];
+      vector<double> JetCand_px, JetCand_py, JetCand_pz, JetCand_e, JetCand_eta, JetCand_phi;
       double HighestJet_e, HighestJet_eta, HighestJet_phi;
       double SumJet_e;
       double Etmiss, Etmiss_phi, Etmiss_x, Etmiss_y, Etmiss_z, Etmiss_significance;
 
       // CTPPS quantities
-      int nLocalProtCand;
-      double LocalProtCand_x[MAX_LOCALPCAND], LocalProtCand_y[MAX_LOCALPCAND], LocalProtCand_z[MAX_LOCALPCAND];
-      double LocalProtCand_xSigma[MAX_LOCALPCAND], LocalProtCand_ySigma[MAX_LOCALPCAND];
-      double LocalProtCand_xi[MAX_LOCALPCAND];
-      double LocalProtCand_Tx[MAX_LOCALPCAND], LocalProtCand_Ty[MAX_LOCALPCAND];
-      double LocalProtCand_TxSigma[MAX_LOCALPCAND], LocalProtCand_TySigma[MAX_LOCALPCAND];
-      int LocalProtCand_arm[MAX_LOCALPCAND], LocalProtCand_side[MAX_LOCALPCAND];
+      vector<double> LocalProtCand_x, LocalProtCand_y, LocalProtCand_z, LocalProtCand_xSigma, LocalProtCand_ySigma;
+      vector<double> LocalProtCand_Tx, LocalProtCand_Ty, LocalProtCand_TxSigma, LocalProtCand_TySigma;
+      vector<int> LocalProtCand_arm, LocalProtCand_side;
 
       int nLocalProtPairCand;
-      double LocalProtPairCand_mass[MAX_LOCALPPAIRCAND], LocalProtPairCand_pt[MAX_LOCALPPAIRCAND], LocalProtPairCand_y[MAX_LOCALPPAIRCAND];
+      vector<double> LocalProtPairCand_mass, LocalProtPairCand_pt, LocalProtPairCand_y;
 };
 
 //

@@ -182,139 +182,18 @@ GammaGammaLL::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   } // run on MC?
   
   std::map<int, TLorentzVector> muonsMomenta, electronsMomenta;
-  muonsMomenta.clear();
-  electronsMomenta.clear();
   
-  TLorentzVector leptonptmp;
   
   // Get the muons collection from the event
   if (fetchMuons_) {
-    // PAT muons
-    edm::Handle<edm::View<pat::Muon> > muonColl;
-    edm::View<pat::Muon>::const_iterator muon;
-
-    // RECO muons
-    /*edm::Handle<reco::MuonCollection> muonColl;
-    reco::MuonCollection::const_iterator muon;*/
-
-    iEvent.getByToken(muonToken_, muonColl);
-
-    for (muon=muonColl->begin(); muon!=muonColl->end() && nMuonCand<MAX_MUONS; muon++) {
-      MuonCand_p[nMuonCand] = muon->p();
-      MuonCand_px[nMuonCand] = muon->px();
-      MuonCand_py[nMuonCand] = muon->py();
-      MuonCand_pz[nMuonCand] = muon->pz();
-      MuonCand_pt[nMuonCand] = muon->pt();
-      MuonCand_eta[nMuonCand] = muon->eta();
-      MuonCand_phi[nMuonCand] = muon->phi();
-      MuonCand_charge[nMuonCand] = muon->charge();
-      MuonCand_dxy[nMuonCand] = muon->dB();
-      MuonCand_nstatseg[nMuonCand] = muon->numberOfMatchedStations();
-            
-      MuonCand_vtxx[nMuonCand] = muon->vertex().x();
-      MuonCand_vtxy[nMuonCand] = muon->vertex().y();
-      MuonCand_vtxz[nMuonCand] = muon->vertex().z();
-      
-      MuonCand_isglobal[nMuonCand] = muon->isGlobalMuon();
-      MuonCand_istracker[nMuonCand] = muon->isTrackerMuon();
-      MuonCand_isstandalone[nMuonCand] = muon->isStandAloneMuon();
-      MuonCand_ispfmuon[nMuonCand] = muon->isPFMuon();
-
-      if (MuonCand_istracker[nMuonCand]) {
-	MuonCand_npxlhits[nMuonCand] = muon->innerTrack()->hitPattern().numberOfValidPixelHits();
-	MuonCand_ntrklayers[nMuonCand] = muon->innerTrack()->hitPattern().trackerLayersWithMeasurement();
-	leptonptmp.SetXYZM(muon->innerTrack()->px(), muon->innerTrack()->py(), muon->innerTrack()->pz(), muon->mass());
-      }
-      else {
-	leptonptmp.SetXYZM(muon->px(), muon->py(), muon->pz(), muon->mass());
-      }
-      muonsMomenta.insert(std::pair<int,TLorentzVector>(nMuonCand, leptonptmp));
-
-      if (MuonCand_isglobal[nMuonCand] && MuonCand_istracker[nMuonCand]) {
-	MuonCandTrack_nmuchits[nMuonCand] = muon->globalTrack()->hitPattern().numberOfValidMuonHits();
-	MuonCandTrack_chisq[nMuonCand] = muon->globalTrack()->normalizedChi2();
-	const bool istight = ( MuonCand_ispfmuon[nMuonCand]
-                          and (MuonCandTrack_chisq[nMuonCand]<10.)
-                          and (MuonCandTrack_nmuchits[nMuonCand]>=1)
-                          and (MuonCand_nstatseg[nMuonCand]>=2)
-                          and (MuonCand_dxy[nMuonCand]<.2)
-                          and (MuonCand_npxlhits[nMuonCand]>0)
-                          and (MuonCand_ntrklayers[nMuonCand]>5));
-	MuonCand_istight[nMuonCand] = istight;
-      } 
-
-      nMuonCand++;
-    }
-    nLeptonCand += nMuonCand;
-    if (verb_>1) edm::LogInfo("GammaGammaLL") << "Passed Muon retrieval stage. Got " << nMuonCand << " muon(s)";
+    extractMuons(iEvent, &muonsMoments);
+    if (verb_>1) edm::LogInfo("GammaGammaLL") << "Passed Muon retrieval stage. Got " << MuonCand_p.size() << " muon(s)";
   } // fetch muons?
 
   // Get the electrons collection from the event
   if (fetchElectrons_) {
-    edm::Handle<edm::View<pat::Electron> > eleColl;
-    iEvent.getByToken(eleToken_, eleColl);
-    // New 2012 electron ID variables conversions
-    //edm::Handle<double> rhoIso_h;
-    //edm::Handle<reco::ConversionCollection> conversions_h;
-    //iEvent.getByToken(conversionsToken_, conversions_h);
-
-    edm::Handle<edm::ValueMap<bool> > loose_id_decisions;
-    iEvent.getByToken(eleLooseIdMapToken_, loose_id_decisions);
-    edm::Handle<edm::ValueMap<bool> > medium_id_decisions;
-    iEvent.getByToken(eleMediumIdMapToken_, medium_id_decisions);
-    edm::Handle<edm::ValueMap<bool> > tight_id_decisions; 
-    iEvent.getByToken(eleTightIdMapToken_, tight_id_decisions);
-
-    for (unsigned int j=0; j<eleColl->size(); j++) {
-      const auto electron = eleColl->ptrAt(j);
-
-      EleCand_e[nEleCand] = electron->energy();
-      EleCand_et[nEleCand] = electron->et();
-      EleCand_px[nEleCand] = electron->px();
-      EleCand_py[nEleCand] = electron->py();
-      EleCand_pz[nEleCand] = electron->pz();
-      EleCand_p[nEleCand] = electron->p();
-      EleCand_phi[nEleCand] = electron->phi();
-      EleCand_eta[nEleCand] = electron->eta();
-      EleCand_charge[nEleCand] = electron->charge();
-  	  
-      EleCand_vtxx[nEleCand] = electron->vertex().x();
-      EleCand_vtxy[nEleCand] = electron->vertex().y();
-      EleCand_vtxz[nEleCand] = electron->vertex().z();
-  	  
-      leptonptmp.SetXYZM(electron->px(), electron->py(), electron->pz(), electron->mass());
-
-      if (electron->closestCtfTrackRef().isNonnull()) { // Only for pat::Electron
-        EleCandTrack_p[nEleCand] = electron->closestCtfTrackRef()->p(); 
-        EleCandTrack_pt[nEleCand] = electron->closestCtfTrackRef()->pt();  
-        EleCandTrack_eta[nEleCand] = electron->closestCtfTrackRef()->eta();  
-        EleCandTrack_phi[nEleCand] = electron->closestCtfTrackRef()->phi();  
-        EleCandTrack_vtxz[nEleCand] = electron->closestCtfTrackRef()->vertex().z();
-	leptonptmp.SetPtEtaPhiM(EleCandTrack_pt[nEleCand], EleCandTrack_eta[nEleCand], EleCandTrack_phi[nEleCand], electron->mass());
-      }
-
-      electronsMomenta.insert(std::pair<int,TLorentzVector>(nEleCand, leptonptmp));
-
-      EleCand_deltaPhi[nEleCand] = electron->deltaPhiSuperClusterTrackAtVtx();
-      EleCand_deltaEta[nEleCand] = electron->deltaEtaSuperClusterTrackAtVtx();
-      EleCand_HoverE[nEleCand] = electron->hcalOverEcal();
-      EleCand_trackiso[nEleCand] = electron->dr03TkSumPt() / electron->et();
-      EleCand_ecaliso[nEleCand] = electron->dr03EcalRecHitSumEt() / electron->et();
-      EleCand_hcaliso[nEleCand] = electron->dr03HcalTowerSumEt() / electron->et();
-      EleCand_sigmaIetaIeta[nEleCand] = electron->sigmaIetaIeta();
-      EleCand_convDist[nEleCand] = fabs(electron->convDist()); 
-      EleCand_convDcot[nEleCand] = fabs(electron->convDcot()); 
-      EleCand_ecalDriven[nEleCand] = electron->ecalDrivenSeed();
-
-      //reco::GsfElectron* electron 
-      EleCand_looseID[nEleCand] = (*loose_id_decisions)[electron];
-      EleCand_mediumID[nEleCand] = (*medium_id_decisions)[electron];
-      EleCand_tightID[nEleCand] = (*tight_id_decisions)[electron];
- 
-      nEleCand++;
-    }
-    nLeptonCand += nEleCand;
-    if (verb_>1) edm::LogInfo("GammaGammaLL") << "Passed Electron retrieval stage. Got " << nEleCand << " electron(s)";
+    extractElectrons(iEvent, &electronsMomenta);
+    if (verb_>1) edm::LogInfo("GammaGammaLL") << "Passed Electron retrieval stage. Got " << EleCand_p.size() << " electron(s)";
   } // fetch electrons?  
   
   // Get the PFlow collection from the event
@@ -331,18 +210,18 @@ GammaGammaLL::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   iEvent.getByToken(photonToken_, photonColl);
 
   for (edm::View<pat::Photon>::const_iterator photon=photonColl->begin(); photon!=photonColl->end(); photon++) { 
-    PhotonCand_p[nPhotonCand] = photon->p();
-    PhotonCand_px[nPhotonCand] = photon->px();
-    PhotonCand_py[nPhotonCand] = photon->py();
-    PhotonCand_pz[nPhotonCand] = photon->pz();
-    PhotonCand_pt[nPhotonCand] = photon->pt();
-    PhotonCand_eta[nPhotonCand] = photon->eta();
-    PhotonCand_phi[nPhotonCand] = photon->phi();
-    PhotonCand_r9[nPhotonCand] = photon->r9();
+    PhotonCand_p.push_back( photon->p() );
+    PhotonCand_px.push_back( photon->px() );
+    PhotonCand_py.push_back( photon->py() );
+    PhotonCand_pz.push_back( photon->pz() );
+    PhotonCand_pt.push_back( photon->pt() );
+    PhotonCand_eta.push_back( photon->eta() );
+    PhotonCand_phi.push_back( photon->phi() );
+    PhotonCand_r9.push_back( photon->r9() );
 
-    PhotonCand_drtrue[nPhotonCand] = -999.;
-    PhotonCand_detatrue[nPhotonCand] = -999.;
-    PhotonCand_dphitrue[nPhotonCand] = -999.;
+    /*PhotonCand_drtrue.push_back( -999.;
+    PhotonCand_detatrue.push_back( -999.;
+    PhotonCand_dphitrue.push_back( -999.;
     if (runOnMC_) {
       double photdr = 999., photdeta = 999., photdphi = 999.;
       double endphotdr = 999., endphotdeta = 999., endphotdphi = 999.;
@@ -356,10 +235,10 @@ GammaGammaLL::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
           endphotdphi = photdphi;
         }
       }
-      PhotonCand_detatrue[nPhotonCand] = endphotdeta;
-      PhotonCand_dphitrue[nPhotonCand] = endphotdphi;
-      PhotonCand_drtrue[nPhotonCand] = endphotdr;
-    }
+      PhotonCand_detatrue.push_back( endphotdeta );
+                                     PhotonCand_dphitrue.push_back( endphotdphi );
+                                     PhotonCand_drtrue.push_back( endphotdr );
+                                     }*/
     nPhotonCand++;
     if (verb_>1) edm::LogInfo("GammaGammaLL") << "Passed photons retrieval stage. Got " << nPhotonCand << " photon(s)";
   }
@@ -828,6 +707,143 @@ GammaGammaLL::analyzeMCEventContent(const edm::Event& iEvent)
 
     GenPair_dpt = fabs(l1.Pt()-l2.Pt());
     GenPair_3Dangle = (l1.Angle(l2.Vect()))/pi;
+  }
+}
+
+void
+GammaGammaLL::extractElectrons(const edm::Event& iEvent, std::map<int, TLorentzVector>* electronsMomenta)
+{
+  edm::Handle<edm::View<pat::Electron> > eleColl;
+  iEvent.getByToken(eleToken_, eleColl);
+  // New 2012 electron ID variables conversions
+  //edm::Handle<double> rhoIso_h;
+  //edm::Handle<reco::ConversionCollection> conversions_h;
+  //iEvent.getByToken(conversionsToken_, conversions_h);
+  
+  edm::Handle<edm::ValueMap<bool> > loose_id_decisions;
+  iEvent.getByToken(eleLooseIdMapToken_, loose_id_decisions);
+  edm::Handle<edm::ValueMap<bool> > medium_id_decisions;
+  iEvent.getByToken(eleMediumIdMapToken_, medium_id_decisions);
+  edm::Handle<edm::ValueMap<bool> > tight_id_decisions; 
+  iEvent.getByToken(eleTightIdMapToken_, tight_id_decisions);
+
+  TLorentzVector leptonptmp;
+  electronsMomenta->clear();
+
+  for (unsigned int j=0; j<eleColl->size(); j++) {
+    const auto electron = eleColl->ptrAt(j);
+    
+    EleCand_e.push_back( electron->energy() );
+    EleCand_et.push_back( electron->et() );
+    EleCand_px.push_back( electron->px() );
+    EleCand_py.push_back( electron->py() );
+    EleCand_pz.push_back( electron->pz() );
+    EleCand_p.push_back( electron->p() );
+    EleCand_phi.push_back( electron->phi() );
+    EleCand_eta.push_back( electron->eta() );
+    EleCand_charge.push_back( electron->charge() );
+
+    EleCand_vtxx.push_back( electron->vertex().x() );
+    EleCand_vtxy.push_back( electron->vertex().y() );
+    EleCand_vtxz.push_back( electron->vertex().z() );
+
+    leptonptmp.SetXYZM(electron->px(), electron->py(), electron->pz(), electron->mass());
+
+    if (electron->closestCtfTrackRef().isNonnull()) { // Only for pat::Electron
+      EleCandTrack_p.push_back( electron->closestCtfTrackRef()->p() );
+      EleCandTrack_pt.push_back( electron->closestCtfTrackRef()->pt() );
+      EleCandTrack_eta.push_back( electron->closestCtfTrackRef()->eta() );
+      EleCandTrack_phi.push_back( electron->closestCtfTrackRef()->phi() );
+      EleCandTrack_vtxz.push_back( electron->closestCtfTrackRef()->vertex().z() );
+      leptonptmp.SetPtEtaPhiM( electron->closestCtfTrackRef()->pt(),
+                               electron->closestCtfTrackRef()->eta(),
+                               electron->closestCtfTrackRef()->phi(),
+                               electron->mass());
+    }
+
+    electronsMomenta->insert(std::pair<int,TLorentzVector>( j, leptonptmp ));
+
+    EleCand_deltaPhi.push_back( electron->deltaPhiSuperClusterTrackAtVtx() );
+    EleCand_deltaEta.push_back( electron->deltaEtaSuperClusterTrackAtVtx() );
+    EleCand_HoverE.push_back( electron->hcalOverEcal() );
+    EleCand_trackiso.push_back( electron->dr03TkSumPt() / electron->et() );
+    EleCand_ecaliso.push_back( electron->dr03EcalRecHitSumEt() / electron->et() );
+    EleCand_hcaliso.push_back( electron->dr03HcalTowerSumEt() / electron->et() );
+    EleCand_sigmaIetaIeta.push_back( electron->sigmaIetaIeta() );
+    EleCand_convDist.push_back( fabs(electron->convDist()) );
+    EleCand_convDcot.push_back( fabs(electron->convDcot()) );
+    EleCand_ecalDriven.push_back( electron->ecalDrivenSeed() );
+
+    //reco::GsfElectron* electron 
+    EleCand_looseID.push_back( (*loose_id_decisions)[electron] );
+    EleCand_mediumID.push_back( (*medium_id_decisions)[electron] );
+    EleCand_tightID.push_back( (*tight_id_decisions)[electron] );
+
+    nLeptonCand++;
+  }
+}
+
+void
+GammaGammaLL::extractMuons(const edm::Event& iEvent, std::map<int, TLorentzVector>* muonsMomenta)
+{
+  // PAT muons
+  edm::Handle<edm::View<pat::Muon> > muonColl;
+  edm::View<pat::Muon>::const_iterator muon;
+
+  // RECO muons
+  /*edm::Handle<reco::MuonCollection> muonColl;
+    reco::MuonCollection::const_iterator muon;*/
+
+  iEvent.getByToken(muonToken_, muonColl);
+
+  TLorentzVector leptonptmp;
+  muonsMomenta->clear();
+
+  unsigned int i = 0;
+  for (muon=muonColl->begin(); muon!=muonColl->end() && nMuonCand<MAX_MUONS; muon++) {
+    MuonCand_p.push_back( muon->p() );
+    MuonCand_px.push_back( muon->px() );
+    MuonCand_py.push_back( muon->py() );
+    MuonCand_pz.push_back( muon->pz() );
+    MuonCand_pt.push_back( muon->pt() );
+    MuonCand_eta.push_back( muon->eta() );
+    MuonCand_phi.push_back( muon->phi() );
+    MuonCand_charge.push_back( muon->charge() );
+    MuonCand_dxy.push_back( muon->dB() );
+    MuonCand_nstatseg.push_back( muon->numberOfMatchedStations() );
+
+    MuonCand_vtxx.push_back( muon->vertex().x() );
+    MuonCand_vtxy.push_back( muon->vertex().y() );
+    MuonCand_vtxz.push_back( muon->vertex().z() );
+      
+    MuonCand_isglobal.push_back( muon->isGlobalMuon() );
+    MuonCand_istracker.push_back( muon->isTrackerMuon() );
+    MuonCand_isstandalone.push_back( muon->isStandAloneMuon() );
+    MuonCand_ispfmuon.push_back( muon->isPFMuon() );
+
+    leptonptmp.SetXYZM(muon->px(), muon->py(), muon->pz(), muon->mass());
+    if (muon->isTrackerMuon()) {
+      MuonCand_npxlhits.push_back( muon->innerTrack()->hitPattern().numberOfValidPixelHits() );
+      MuonCand_ntrklayers.push_back( muon->innerTrack()->hitPattern().trackerLayersWithMeasurement() );
+      leptonptmp.SetXYZM(muon->innerTrack()->px(), muon->innerTrack()->py(), muon->innerTrack()->pz(), muon->mass());
+
+      if (muon->isGlobalMuon()) {
+        MuonCandTrack_nmuchits.push_back( muon->globalTrack()->hitPattern().numberOfValidMuonHits() );
+        MuonCandTrack_chisq.push_back( muon->globalTrack()->normalizedChi2() );
+        const bool istight = ( muon->isPFMuon()
+                               && (muon->globalTrack()->normalizedChi2()<10.)
+                               && (muon->globalTrack()->hitPattern().numberOfValidMuonHits()>=1)
+                               && (muon->numberOfMatchedStations()>=2)
+                               && (muon->dB()<.2)
+                               && (muon->innerTrack()->hitPattern().numberOfValidPixelHits()>0)
+                               && (muon->innerTrack()->hitPattern().trackerLayersWithMeasurement()>5));
+        MuonCand_istight.push_back( istight );
+      }
+    }
+    muonsMomenta->insert(std::pair<int,TLorentzVector>( i, leptonptmp ));
+
+    i++;
+    nLeptonCand++;
   }
 }
 

@@ -156,7 +156,7 @@ GammaGammaLL::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   // Generator level information
   if (runOnMC_) {
-    ////analyzeMCEventContent(iEvent);//FIXME
+    analyzeMCEventContent(iEvent);
 
     // Pileup information
     const edm::EventBase* iEventB = dynamic_cast<const edm::EventBase*>(&iEvent);
@@ -633,35 +633,34 @@ GammaGammaLL::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     //nProtonCand = nProtonPair = 0;
 std::cout << "protons: " << protons->size() << std::endl;
     for (unsigned int i=0; i<protons->size(); i++) {
-      //const edm::Ptr<reco::Proton> proton1 = protons->ptrAt(i);
-/*      const reco::Proton proton1 = protons->at(i);
-      if (!proton1.isValid()) continue;
+      const edm::Ptr<reco::Proton> proton1 = protons->ptrAt(i);
+      if (!proton1->isValid()) continue;
       
-      if (proton1.nearTrack()) {
-        ProtonCand_nearX[nProtonCand] = proton1.nearTrack()->getX0()/1.e3;
-        ProtonCand_nearY[nProtonCand] = proton1.nearTrack()->getY0()/1.e3;
+      if (proton1->nearTrack()) {
+        ProtonCand_nearX[nProtonCand] = proton1->nearTrack()->getX0()/1.e3;
+        ProtonCand_nearY[nProtonCand] = proton1->nearTrack()->getY0()/1.e3;
       }
-      if (proton1.farTrack()) {
-        ProtonCand_farX[nProtonCand] = proton1.farTrack()->getX0()/1.e3;
-        ProtonCand_farY[nProtonCand] = proton1.farTrack()->getY0()/1.e3;
+      if (proton1->farTrack()) {
+        ProtonCand_farX[nProtonCand] = proton1->farTrack()->getX0()/1.e3;
+        ProtonCand_farY[nProtonCand] = proton1->farTrack()->getY0()/1.e3;
       }
-      ProtonCand_side[nProtonCand] = proton1.side();
+      ProtonCand_side[nProtonCand] = proton1->side();
 
       for (unsigned int j=i+1; j<protons->size(); j++) {
-        const reco::Proton proton2 = protons->at(j); 
-        if (!proton2.isValid()) continue;
-        if (proton2.side()==proton1.side()) continue;
+        const edm::Ptr<reco::Proton> proton2 = protons->ptrAt(j); 
+        if (!proton2->isValid()) continue;
+        if (proton2->side()==proton1->side()) continue;
 
         ProtonPair_candidates[nProtonPair][0] = i;
         ProtonPair_candidates[nProtonPair][1] = j;
-        if (proton1.side()==1) {
+        if (proton1->side()==1) {
           ProtonPair_candidates[nProtonPair][0] = j;
           ProtonPair_candidates[nProtonPair][1] = i;
         }
-        ProtonPair_mass[nProtonPair] = sqrts_*sqrt(proton1.xi()*proton2.xi());
+        ProtonPair_mass[nProtonPair] = sqrts_*sqrt(proton1->xi()*proton2->xi());
         ProtonPair_rapidity[nProtonPair] = 0.; //FIXME
         nProtonPair++;
-      }*/
+      }
 
       nProtonCand++;
       //if (verb_>2) edm::LogInfo("GammaGammaLL") << "Proton track candidate with origin: (" << proton->getX0() << ", " << proton->getY0() << ", " << proton->getZ0() << ") extracted!";

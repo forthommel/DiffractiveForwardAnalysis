@@ -102,6 +102,7 @@ process.out = cms.OutputModule("PoolOutputModule",
         'keep *_selectedPatJets*_*_*',
         'keep *_*MET*_*_*',
         'keep *_*particleFlow*_*_*',
+        'keep *_protons_*_*',
         #*patEventContentNoCleaning
     ),
 )
@@ -122,6 +123,12 @@ switchOnVIDElectronIdProducer(process, DataFormat.AOD)
 setupAllVIDIdsInModule(process, 'RecoEgamma.ElectronIdentification.Identification.cutBasedElectronID_Spring15_25ns_V1_cff', setupVIDElectronSelection)
 
 #########################
+#      Proton reco      #
+#########################
+
+process.load('RecoCTPPS.Configuration.recoCTPPS_cff')
+
+#########################
 #       Analysis        #
 #########################
 
@@ -136,13 +143,14 @@ process.ggll_aod.outfilename = cms.untracked.string('output.root')
 process.ggll_aod.fetchProtons = cms.bool(True)
 
 process.p = cms.Path(
-    process.hltFilter*
-    #process.scrapingVeto*
-    #process.kt6PFJetsForIsolation*
-    #process.pfiso*
-    #process.primaryVertexFilter*
-    process.egmGsfElectronIDSequence*
-    process.patDefaultSequence*
-    #getattr(process,"patPF2PATSequence"+postfix)*
-    process.ggll_aod
+    process.hltFilter
+    #*process.scrapingVeto
+    #*process.kt6PFJetsForIsolation
+    #*process.pfiso
+    #*process.primaryVertexFilter
+    *process.protonProducer
+    *process.egmGsfElectronIDSequence
+    *process.patDefaultSequence
+    #*getattr(process,"patPF2PATSequence"+postfix)
+    *process.ggll_aod
 )

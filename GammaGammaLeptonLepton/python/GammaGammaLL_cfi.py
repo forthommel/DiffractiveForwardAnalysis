@@ -6,7 +6,7 @@ ggll_aod = cms.EDAnalyzer(
     HLTMenuLabel = cms.string('HLT'),
     TriggerResults = cms.InputTag('TriggerResults', '', 'HLT'),
     LeptonsType = cms.InputTag('electron', 'muon'),
-    maxExtraTracks = cms.untracked.uint32(10000),
+    maxExtraTracks = cms.untracked.uint32(500),
     isoValInputTags = cms.VInputTag(
         cms.InputTag('elPFIsoValueCharged03PFIdPFIso'),
         cms.InputTag('elPFIsoValueGamma03PFIdPFIso'),
@@ -32,7 +32,7 @@ ggll_aod = cms.EDAnalyzer(
     JetCollectionLabel = cms.InputTag('selectedPatJets'),
     MetLabel = cms.InputTag('patMETs'),
     photonLabel = cms.InputTag('selectedPatPhotons'),
-    totemRPLocalTrackLabel = cms.InputTag('totemRPLocalTrackFitter'),
+    protonLabel = cms.InputTag('protons'),
     RunOnMC = cms.untracked.bool(True),
     MCAcceptPtCut = cms.untracked.double(0.),
     MCAcceptEtaCut = cms.untracked.double(-1.),

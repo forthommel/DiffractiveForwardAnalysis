@@ -71,7 +71,7 @@
 #include "DataFormats/JetReco/interface/CaloJetCollection.h"
 
 // CT-PPS objects
-#include "DataFormats/CTPPSReco/interface/TotemRPLocalTrack.h"
+#include "DataFormats/CTPPSReco/interface/Proton.h"
 
 // HPS acceptance
 #include "DiffractiveForwardAnalysis/GammaGammaLeptonLepton/interface/AcceptanceTableHelper.h"
@@ -95,20 +95,20 @@
 #define MAX_ELE    25   // Maximum number of electrons per event
 #define MAX_PHO    50   // Maximum number of photons per event
 #define MAX_PAIRS  25   // Maximum number of leptons pairs per event
-#define MAX_VTX    1000 // Maximum number of primary vertices per event
-#define MAX_ET     10000// Maximum number of extra tracks per event
+#define MAX_VTX    100  // Maximum number of primary vertices per event
+#define MAX_ET     500  // Maximum number of extra tracks per event
 #define MAX_GENMU  25   // Maximum number of generator level muons per event
 #define MAX_GENELE 25   // Maximum number of generator level electrons per event
 #define MAX_GENPHO 10   // Maximum number of generator level photons per event
-#define MAX_GENPRO 8    // Maximum number of generator level protons per event
+#define MAX_GENPRO 4    // Maximum number of generator level protons per event
 #define MAX_JETS   30   // Maximum number of jets per event
-#define MAX_LOCALPCAND 10 // Maximum number of reconstructed local tracks in RPs
-#define MAX_LOCALPPAIRCAND 5 // Maximum number of reconstructed local tracks pairs in RPs
+#define MAX_PRO    10   // Maximum number of reconstructed protons in RPs
+#define MAX_PROPRO 5    // Maximum number of reconstructed proton pairs in RPs
 
 #define MASS_MU 0.1057
 #define MASS_E  0.000511
 #define MASS_P  0.938272029
-#define pi 3.14159265359
+#define pi      3.14159265359
 
 typedef std::vector< edm::Handle< edm::ValueMap<double> > > IsoDepositVals; 
 
@@ -165,7 +165,7 @@ class GammaGammaLL : public edm::EDAnalyzer {
       edm::EDGetTokenT< std::vector<PileupSummaryInfo> > pileupToken_;
       edm::EDGetTokenT< edm::View<pat::Jet> > jetToken_;
       edm::EDGetTokenT< edm::View<pat::MET> > metToken_;
-      edm::EDGetTokenT< edm::DetSetVector<TotemRPLocalTrack> > totemRPHitToken_;
+      edm::EDGetTokenT< edm::View<reco::Proton> > protonToken_;
       edm::EDGetTokenT< edm::View<pat::Photon> > photonToken_;
       edm::EDGetTokenT< edm::View<reco::PFCandidate> > pflowToken_;
 
@@ -183,7 +183,6 @@ class GammaGammaLL : public edm::EDAnalyzer {
 
       // Pileup information
       edm::LumiReWeighting *lumiWeights_;
-      std::string mcPileupFile_, mcPileupPath_, dataPileupFile_, dataPileupPath_;
       
       // Isolation
       double rhoIso;
@@ -336,16 +335,15 @@ class GammaGammaLL : public edm::EDAnalyzer {
       double Etmiss, Etmiss_phi, Etmiss_x, Etmiss_y, Etmiss_z, Etmiss_significance;
 
       // CTPPS quantities
-      int nLocalProtCand;
-      double LocalProtCand_x[MAX_LOCALPCAND], LocalProtCand_y[MAX_LOCALPCAND], LocalProtCand_z[MAX_LOCALPCAND];
-      double LocalProtCand_xSigma[MAX_LOCALPCAND], LocalProtCand_ySigma[MAX_LOCALPCAND];
-      double LocalProtCand_xi[MAX_LOCALPCAND];
-      double LocalProtCand_Tx[MAX_LOCALPCAND], LocalProtCand_Ty[MAX_LOCALPCAND];
-      double LocalProtCand_TxSigma[MAX_LOCALPCAND], LocalProtCand_TySigma[MAX_LOCALPCAND];
-      int LocalProtCand_arm[MAX_LOCALPCAND], LocalProtCand_side[MAX_LOCALPCAND];
+      int nProtonCand;
+      double ProtonCand_nearX[MAX_PRO], ProtonCand_nearY[MAX_PRO];
+      double ProtonCand_farX[MAX_PRO], ProtonCand_farY[MAX_PRO];
+      double ProtonCand_xi[MAX_PRO];
+      int ProtonCand_side[MAX_PRO];
 
-      int nLocalProtPairCand;
-      double LocalProtPairCand_mass[MAX_LOCALPPAIRCAND], LocalProtPairCand_pt[MAX_LOCALPPAIRCAND], LocalProtPairCand_y[MAX_LOCALPPAIRCAND];
+      int nProtonPair;
+      int ProtonPair_candidates[MAX_PROPRO][2];
+      double ProtonPair_mass[MAX_PROPRO], ProtonPair_rapidity[MAX_PROPRO];
 };
 
 //

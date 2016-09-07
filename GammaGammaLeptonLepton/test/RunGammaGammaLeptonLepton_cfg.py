@@ -15,9 +15,9 @@ process.options   = cms.untracked.PSet(
     #SkipEvent = cms.untracked.vstring('ProductNotFound')
 )
 
-#process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
-#process.MessageLogger.cerr.FwkReport.reportEvery = 1000
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+#process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
+process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 #########################
 #      Input files      #
@@ -141,6 +141,7 @@ process.ggll_aod.LeptonsType = cms.vstring('Muon')
 process.ggll_aod.RunOnMC = cms.untracked.bool(runOnMC)
 process.ggll_aod.outfilename = cms.untracked.string('output.root')
 process.ggll_aod.fetchProtons = cms.bool(True)
+process.ggll_aod.minLeptonsPt = cms.double(50.)
 
 process.p = cms.Path(
     process.hltFilter

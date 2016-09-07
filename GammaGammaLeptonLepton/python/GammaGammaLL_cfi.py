@@ -6,6 +6,8 @@ ggll_aod = cms.EDAnalyzer(
     HLTMenuLabel = cms.string('HLT'),
     TriggerResults = cms.InputTag('TriggerResults', '', 'HLT'),
     LeptonsType = cms.InputTag('electron', 'muon'),
+    minLeptonsPt = cms.double(20.),
+    maxLeptonsEta = cms.double(2.4),
     maxExtraTracks = cms.untracked.uint32(500),
     isoValInputTags = cms.VInputTag(
         cms.InputTag('elPFIsoValueCharged03PFIdPFIso'),

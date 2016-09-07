@@ -48,6 +48,8 @@ GammaGammaLL::GammaGammaLL(const edm::ParameterSet& iConfig) :
   runOnMC_            (iConfig.getUntrackedParameter<bool>("RunOnMC", false)),
   printCandidates_    (iConfig.getUntrackedParameter<bool>("PrintCandidates", false)),
   sqrts_              (iConfig.getParameter<double>("SqrtS")),
+  minLeptonPt_        (iConfig.getParameter<double>("minLeptonsPt")),
+  maxLeptonEta_       (iConfig.getParameter<double>("maxLeptonsEta")),
   maxExTrkVtx_        (iConfig.getUntrackedParameter<unsigned int>("maxExtraTracks", 1000)),
   hltPrescale_        (iConfig, consumesCollector(), *this),
   //pflowToken_         (consumes< edm::View<pat::PackedCandidate> >(iConfig.getUntrackedParameter<edm::InputTag>("PFLabel", std::string("particleFlow")))),
@@ -136,7 +138,6 @@ GammaGammaLL::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
   // First initialization of the variables
   clearTree();
-  Weight = 1.;
   
   // Run and BX information
   BX = iEvent.bunchCrossing();
@@ -476,6 +477,7 @@ GammaGammaLL::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
 	for (unsigned int i=0; i<vtx.MatchedMuons.size(); i++) {
 	  const int lep1 = vtx.MatchedMuons[i];
+          if (MuonCand_pt[lep1]<minLeptonPt_ or fabs(MuonCand_eta[lep1])>maxLeptonEta_) continue;
 
 	  TVector3 vtxlep1(MuonCand_vtxx[lep1], MuonCand_vtxy[lep1], MuonCand_vtxz[lep1]);
 	  MuonCand_dz[lep1] = vtx.dZ(vtxlep1, lep1);
@@ -483,7 +485,9 @@ GammaGammaLL::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
 	  for (unsigned int j=0; j<vtx.MatchedElectrons.size(); j++) {
             const int lep2 = vtx.MatchedElectrons[j];
+            if (EleCand_et[lep2]<minLeptonPt_ or fabs(EleCand_eta[lep2])>maxLeptonEta_) continue;
             if (MuonCand_charge[lep1]*EleCand_charge[lep2]>0) continue;
+
             foundPairOnVertex = true;
             const double leptonsDist = sqrt(pow(MuonCand_vtxx[lep1]-EleCand_vtxx[lep2],2)+
 			                    pow(MuonCand_vtxy[lep1]-EleCand_vtxy[lep2],2)+
@@ -509,9 +513,13 @@ GammaGammaLL::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
         for (unsigned int i=0; i<vtx.MatchedElectrons.size(); i++) {
           const int lep1 = vtx.MatchedElectrons[i];
+          if (EleCand_et[lep1]<minLeptonPt_ or fabs(EleCand_eta[lep1])>maxLeptonEta_) continue;
+
           for (unsigned int j=i+1; j<vtx.MatchedElectrons.size(); j++) {
             const int lep2 = vtx.MatchedElectrons[j];
+            if (EleCand_et[lep2]<minLeptonPt_ or fabs(EleCand_eta[lep2])>maxLeptonEta_) continue;
             if (EleCand_charge[lep1]*EleCand_charge[lep2]>0) continue;
+
             foundPairOnVertex = true;
             const double leptonsDist = sqrt(pow(EleCand_vtxx[lep1]-EleCand_vtxx[lep2],2)+
                                             pow(EleCand_vtxy[lep1]-EleCand_vtxy[lep2],2)+
@@ -537,6 +545,7 @@ GammaGammaLL::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
         for (unsigned int i=0; i<vtx.MatchedMuons.size(); i++) {
           const int lep1 = vtx.MatchedMuons[i];
+          if (MuonCand_pt[lep1]<minLeptonPt_ or fabs(MuonCand_eta[lep1])>maxLeptonEta_) continue;
 
 	  TVector3 vtxlep1(MuonCand_vtxx[lep1], MuonCand_vtxy[lep1], MuonCand_vtxz[lep1]);
 	  MuonCand_dz[lep1] = vtx.dZ(vtxlep1, lep1);
@@ -544,12 +553,13 @@ GammaGammaLL::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
           for (unsigned int j=i+1; j<vtx.MatchedMuons.size(); j++) {
             const int lep2 = vtx.MatchedMuons[j];
+            if (MuonCand_pt[lep2]<minLeptonPt_ or fabs(MuonCand_eta[lep2])>maxLeptonEta_) continue;
+            if (MuonCand_charge[lep1]*MuonCand_charge[lep2]>0) continue;
 
 	    TVector3 vtxlep2(MuonCand_vtxx[lep2], MuonCand_vtxy[lep2], MuonCand_vtxz[lep2]);
 	    MuonCand_dz[lep2] = vtx.dZ(vtxlep2, lep2);
 	    MuonCand_istight[lep2]&= (MuonCand_dz[lep2]<.5);
 
-            if (MuonCand_charge[lep1]*MuonCand_charge[lep2]>0) continue;
             foundPairOnVertex = true;
             const double leptonsDist = sqrt(pow(MuonCand_vtxx[lep1]-MuonCand_vtxx[lep2],2)+
                                             pow(MuonCand_vtxy[lep1]-MuonCand_vtxy[lep2],2)+
@@ -630,8 +640,6 @@ GammaGammaLL::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     edm::Handle< edm::View<reco::Proton> > protons; 
     iEvent.getByToken(protonToken_, protons);
 
-    //nProtonCand = nProtonPair = 0;
-std::cout << "protons: " << protons->size() << std::endl;
     for (unsigned int i=0; i<protons->size(); i++) {
       const edm::Ptr<reco::Proton> proton1 = protons->ptrAt(i);
       if (!proton1->isValid()) continue;
@@ -644,6 +652,7 @@ std::cout << "protons: " << protons->size() << std::endl;
         ProtonCand_farX[nProtonCand] = proton1->farTrack()->getX0()/1.e3;
         ProtonCand_farY[nProtonCand] = proton1->farTrack()->getY0()/1.e3;
       }
+      ProtonCand_xi[nProtonCand] = proton1->xi();
       ProtonCand_side[nProtonCand] = proton1->side();
 
       for (unsigned int j=i+1; j<protons->size(); j++) {
@@ -657,8 +666,10 @@ std::cout << "protons: " << protons->size() << std::endl;
           ProtonPair_candidates[nProtonPair][0] = j;
           ProtonPair_candidates[nProtonPair][1] = i;
         }
+        //const float rel_xi = std::sqrt( std::pow( proton1->xiError()/proton1->xi(), 2 ) + std::pow( proton2->xiError()/proton2->xi(), 2 ) );
         ProtonPair_mass[nProtonPair] = sqrts_*sqrt(proton1->xi()*proton2->xi());
-        ProtonPair_rapidity[nProtonPair] = 0.; //FIXME
+        ProtonPair_rapidity[nProtonPair] = 0.5*log(proton2->xi()/proton1->xi());
+cout << "proton pair with mass=" << ProtonPair_mass[nProtonPair] << ", rapidity=" << ProtonPair_rapidity[nProtonPair] << endl;
         nProtonPair++;
       }
 
@@ -1108,6 +1119,7 @@ GammaGammaLL::clearTree()
   nProtonCand = nProtonPair = 0;
 
   //LHCFillNum = LHCBeamMode = -1;
+  Weight = 1.;
 
   HPS_acc420b1 = HPS_acc220b1 = HPS_acc420and220b1 = HPS_acc420or220b1 = -1;
   HPS_acc420b2 = HPS_acc220b2 = HPS_acc420and220b2 = HPS_acc420or220b2 = -1;

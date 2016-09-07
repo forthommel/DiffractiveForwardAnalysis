@@ -174,6 +174,7 @@ class GammaGammaLL : public edm::EDAnalyzer {
       bool runOnMC_, printCandidates_;
       double minPtMC_, minEtaMC_;
       double sqrts_;
+      double minLeptonPt_, maxLeptonEta_;
       unsigned int maxExTrkVtx_;
 
       // Trigger information

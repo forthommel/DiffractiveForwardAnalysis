@@ -39,9 +39,10 @@
 #include "DataFormats/CTPPSReco/interface/CTPPSLocalTrackLite.h"
 #include "DataFormats/CTPPSDetId/interface/CTPPSDetId.h"
 
+#include "DiffractiveForwardAnalysis/GammaGammaLeptonLepton/interface/HLTMatcher.h"
 #include "DiffractiveForwardAnalysis/GammaGammaLeptonLepton/interface/SinglePhotonEvent.h"
 
-class SinglePhotonTreeProducer : public edm::one::EDAnalyzer<edm::one::SharedResources>
+class SinglePhotonTreeProducer : public edm::one::EDAnalyzer<edm::one::WatchRuns,edm::one::SharedResources>
 {
   public:
     explicit SinglePhotonTreeProducer( const edm::ParameterSet& );
@@ -50,16 +51,16 @@ class SinglePhotonTreeProducer : public edm::one::EDAnalyzer<edm::one::SharedRes
     static void fillDescriptions( edm::ConfigurationDescriptions& descriptions );
 
   private:
-    virtual void beginRun( const edm::Run&, const edm::EventSetup& );
-
+    virtual void beginRun( const edm::Run&, const edm::EventSetup& ) override;
     virtual void beginJob() override;
     virtual void analyze( const edm::Event&, const edm::EventSetup& ) override;
     virtual void endJob() override {}
+    virtual void endRun( const edm::Run&, const edm::EventSetup& ) override {}
 
     TTree* tree_;
     gggx::SinglePhotonEvent evt_;
 
-    std::string hltMenuLabel_;
+    edm::InputTag triggerResults_;
     std::vector<std::string> triggersList_;
     bool runOnMC_;
     unsigned int minPhotonMult_, minFwdTrks_;
@@ -72,12 +73,14 @@ class SinglePhotonTreeProducer : public edm::one::EDAnalyzer<edm::one::SharedRes
     edm::EDGetTokenT<edm::View<pat::Jet> > jetsToken_;
     edm::EDGetTokenT<edm::View<pat::MET> > metsToken_;
 
+    ggll::HLTMatcher hlts_;
     HLTConfigProvider hltConfig_;
     HLTPrescaleProvider hltPrescale_;
 };
 
 SinglePhotonTreeProducer::SinglePhotonTreeProducer( const edm::ParameterSet& iConfig ) :
-  hltMenuLabel_  ( iConfig.getParameter<std::string>( "hltMenuTag" ) ),
+  tree_( 0 ),
+  triggerResults_( iConfig.getParameter<edm::InputTag>            ( "triggerResults" ) ),
   triggersList_  ( iConfig.getParameter<std::vector<std::string> >( "triggersList" ) ),
   runOnMC_       ( iConfig.getParameter<bool>( "runOnMC" ) ),
   minPhotonMult_ ( iConfig.getParameter<unsigned int>( "minPhotonMult" ) ),
@@ -90,6 +93,7 @@ SinglePhotonTreeProducer::SinglePhotonTreeProducer( const edm::ParameterSet& iCo
   verticesToken_      ( consumes<edm::View<reco::Vertex> >       ( iConfig.getParameter<edm::InputTag>( "verticesTag" ) ) ),
   jetsToken_          ( consumes<edm::View<pat::Jet> >           ( iConfig.getParameter<edm::InputTag>( "jetsTag" ) ) ),
   metsToken_          ( consumes<edm::View<pat::MET> >           ( iConfig.getParameter<edm::InputTag>( "metsTag" ) ) ),
+  hlts_               ( triggersList_ ),
   hltPrescale_        ( iConfig, consumesCollector(), *this )
 {
   usesResource( "TFileService" );
@@ -110,35 +114,42 @@ SinglePhotonTreeProducer::analyze( const edm::Event& iEvent, const edm::EventSet
   evt_.EventNum = iEvent.id().event();
 
   //--- trigger information
+  evt_.nHLT = triggersList_.size();
   edm::Handle<edm::TriggerResults> hltResults;
   iEvent.getByToken( triggerResultsToken_, hltResults );
-  const edm::TriggerNames& trigNames = iEvent.triggerNames( *hltResults );
-
-  evt_.HLT_Name.reserve( trigNames.size() );
-  for ( const auto& sel : triggersList_ ) {
-    short trig_id = -1;
-    const std::string trig_name = ( sel.size() > 1 && sel[sel.size()-1] == '*' )
-      ? sel.substr( 0, sel.size()-1 ) // remove trailing '*'
-      : sel;
-    for ( unsigned int i = 0; i < trigNames.size(); ++i )
-      if ( trigNames.triggerNames().at( i ).find( trig_name ) != std::string::npos ) {
-        trig_id = i;
-        break;
-      }
-    if ( trig_id < 0 )
-      continue;
-    evt_.HLT_Name[evt_.nHLT] = trigNames.triggerNames().at( trig_id );
-    evt_.HLT_Accept[evt_.nHLT] = hltResults->accept( trig_id );
-    evt_.HLT_Prescl[evt_.nHLT] = 0.;
-    // extract prescale value for this path
-    if ( !runOnMC_ ) {
-      int prescale_set = hltPrescale_.prescaleSet( iEvent, iSetup );
-      evt_.HLT_Prescl[evt_.nHLT] = ( prescale_set < 0 )
-        ? 0.
-        : hltConfig_.prescaleValue(prescale_set, trigNames.triggerNames().at( trig_id ) );
-    }
-    evt_.nHLT++;
+  edm::TriggerNames trigNames;
+  try {
+    trigNames = iEvent.triggerNames( *hltResults );
+  } catch ( const cms::Exception& ) {
+    return;
   }
+  const int prescale_set = hltPrescale_.prescaleSet( iEvent, iSetup );
+  if ( prescale_set < 0 )
+    return;
+
+  std::ostringstream os;
+  os << "Prescale set: " << prescale_set << "\n"
+     << "Trigger names: " << std::endl;
+  for ( unsigned int i = 0; i < trigNames.size(); ++i ) {
+    const std::string trig_name = trigNames.triggerNames().at( i );
+    os << "* " << trig_name << std::endl;
+
+    const int trigNum = hlts_.TriggerNum( trig_name );
+    if ( trigNum < 0 ) // ensure trigger matches the interesting ones
+      continue;
+
+    evt_.HLT_Accept[trigNum] = hltResults->accept( i );
+
+    if ( !evt_.HLT_Accept[trigNum] )
+      continue;
+    if ( !iEvent.isRealData() ) {
+      evt_.HLT_Prescl[trigNum] = 1.;
+      continue;
+    }
+    evt_.HLT_Prescl[trigNum] = hltConfig_.prescaleValue( prescale_set, trig_name );
+  }
+  LogDebug( "GammaGammaLL" ) << os.str() << "\n"
+    << "Passed trigger filtering stage";
 
   //--- photons collection retrieval
   edm::Handle<edm::View<pat::Photon> > photonColl;
@@ -282,20 +293,20 @@ SinglePhotonTreeProducer::beginRun( const edm::Run& iRun, const edm::EventSetup&
 {
   //--- HLT part
   bool changed = true;
-  if ( !hltPrescale_.init( iRun, iSetup, hltMenuLabel_, changed ) )
-    throw cms::Exception( "GammaGammaLL" ) << " prescales extraction failure with process name " << hltMenuLabel_;
+  if ( !hltPrescale_.init( iRun, iSetup, triggerResults_.process(), changed ) )
+    edm::LogError( "SinglePhotonTreeProducer" ) << "prescales extraction failure with process name " << triggerResults_.process();
   // Initialise HLTConfigProvider
   hltConfig_ = hltPrescale_.hltConfigProvider();
-  if ( !hltConfig_.init( iRun, iSetup, hltMenuLabel_, changed ) )
-    throw cms::Exception( "GammaGammaLL" ) << " config extraction failure with process name " << hltMenuLabel_;
-  else if ( hltConfig_.size() == 0 )
-    edm::LogError( "GammaGammaLL" ) << "HLT config size error";
+  if ( hltConfig_.size() == 0 )
+    edm::LogError( "SinglePhotonTreeProducer" ) << "HLT config size error";
 }
 
 void
 SinglePhotonTreeProducer::beginJob()
 {
+  // Filling the ntuple
   evt_.attach( tree_, runOnMC_ );
+  *evt_.HLT_Name = triggersList_;
 }
 
 void
@@ -310,3 +321,4 @@ SinglePhotonTreeProducer::fillDescriptions( edm::ConfigurationDescriptions& desc
 
 //define this as a plug-in
 DEFINE_FWK_MODULE( SinglePhotonTreeProducer );
+

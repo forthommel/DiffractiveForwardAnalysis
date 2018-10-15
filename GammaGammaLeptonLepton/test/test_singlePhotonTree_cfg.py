@@ -16,9 +16,10 @@ process.source = cms.Source("PoolSource",
 #'/store/data/Run2016G/DoubleEG/AOD/23Sep2016-v1/100000/0042DBD3-BA8E-E611-919E-002481ACDAA8.root',
 #'/store/data/Run2017C/DoubleMuon/AOD/12Sep2017-v1/10000/029F251F-B1A2-E711-AAC3-001E67792890.root',
 #'/store/data/Run2017B/SinglePhoton/MINIAOD/17Nov2017-v1/30000/10F66FEF-B7D5-E711-9003-008CFAC93F3C.root',
-'/store/data/Run2017B/SinglePhoton/MINIAOD/12Sep2017-v1/100000/F0CB68CC-0EA3-E711-A877-0025905B85BE.root',
+#'/store/data/Run2017B/SinglePhoton/MINIAOD/12Sep2017-v1/100000/F0CB68CC-0EA3-E711-A877-0025905B85BE.root',
+'/store/data/Run2017F/SinglePhoton/MINIAOD/31Mar2018-v1/100000/5EAB6D02-8738-E811-8AE0-28924A38DC1E.root'
     ),
-    #firstEvent = cms.untracked.uint32(0)
+    firstEvent = cms.untracked.uint32(73001)
 )
 
 #########################
@@ -28,10 +29,8 @@ process.source = cms.Source("PoolSource",
 process.load('HLTrigger.HLTfilters.hltHighLevel_cfi')
 #process.hltHighLevel.TriggerResultsTag = cms.InputTag("TriggerResults","","HLT")
 process.hltHighLevel.HLTPaths = cms.vstring(
-    'HLT_Photon33_v*',
-    'HLT_Photon50_v*',
-    'HLT_Photon75_v*',
-    'HLT_Photon90_v*',
+    'HLT_Photon60_R9Id90_CaloIdL_IsoL_DisplacedIdL_PFHT350MinPFJet15_v*',
+    'HLT_Photon200_v*',
 )
 #process.hltHighLevel.throw = cms.bool(False)
 

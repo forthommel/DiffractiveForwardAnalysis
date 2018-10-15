@@ -11,10 +11,13 @@ namespace gggx
   class SinglePhotonEvent
   {
     public:
-      SinglePhotonEvent() : pHLT_Name( nullptr ) {
+      SinglePhotonEvent() :
+        HLT_Name( new std::vector<std::string>() ) {
         clear();
       }
-      ~SinglePhotonEvent() {}
+      ~SinglePhotonEvent() {
+        if ( HLT_Name ) delete HLT_Name;
+      }
 
       //////  Leaves size  //////
 
@@ -31,7 +34,7 @@ namespace gggx
       /// Maximum number of jets per event
       static constexpr unsigned int MAX_JETS = 40;
       /// Maximum number of reconstructed local tracks in RPs
-      static constexpr unsigned int MAX_FWDTRKCAND = 25;
+      static constexpr unsigned int MAX_FWDTRKCAND = 120;
 
       ////// Tree contents //////
 
@@ -43,7 +46,7 @@ namespace gggx
       // HLT quantities
       unsigned int nHLT;
       int HLT_Accept[MAX_HLT], HLT_Prescl[MAX_HLT];
-      std::vector<std::string> HLT_Name, *pHLT_Name;
+      std::vector<std::string>* HLT_Name;
 
       // Generator level quantities
       unsigned int nGenPhotCand, nGenPhotCandOutOfAccept;
@@ -90,7 +93,6 @@ namespace gggx
 
         // high-level trigger
         nHLT = 0;
-        HLT_Name.clear();
         for ( unsigned int i = 0; i < MAX_HLT; ++i )
           HLT_Accept[i] = HLT_Prescl[i] = -1;
 
@@ -158,8 +160,7 @@ namespace gggx
         tree->Branch( "nHLT", &nHLT, "nHLT/i" );
         tree->Branch( "HLT_Accept", HLT_Accept, "HLT_Accept[nHLT]/I" );
         tree->Branch( "HLT_Prescl", HLT_Prescl, "HLT_Prescl[nHLT]/I" );
-        pHLT_Name = &HLT_Name;
-        tree->Branch( "HLT_Name", "std::vector<std::string>", &pHLT_Name );
+        tree->Branch( "HLT_Name", &HLT_Name );
 
         tree->Branch( "nPhotonCand", &nPhotonCand, "nPhotonCand/i" );
         tree->Branch( "PhotonCand_pt", PhotonCand_pt, "PhotonCand_pt[nPhotonCand]/D" );
@@ -242,7 +243,7 @@ namespace gggx
         tree->SetBranchAddress( "nHLT", &nHLT );
         tree->SetBranchAddress( "HLT_Accept", HLT_Accept );
         tree->SetBranchAddress( "HLT_Prescl", HLT_Prescl );
-        tree->SetBranchAddress( "HLT_Name", &pHLT_Name );
+        tree->SetBranchAddress( "HLT_Name", &HLT_Name );
 
         tree->SetBranchAddress( "nPhotonCand", &nPhotonCand );
         tree->SetBranchAddress( "PhotonCand_pt", PhotonCand_pt );

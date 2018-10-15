@@ -132,7 +132,7 @@ class Canvas : public TCanvas
     }
 
     typedef std::vector< std::pair<std::string,TH1*> > HistsMap;
-    inline void RatioPlot( HistsMap hm, float ymin = kInvalid, float ymax = kInvalid, float xline = kInvalid, bool pull = false ) {
+    inline void RatioPlot( HistsMap hm, float ymin = kInvalid, float ymax = kInvalid, float xline = kInvalid, bool pull = false, bool draw_denom_err = false ) {
       if ( !ratio_ )
         throw std::runtime_error( "Trying to produce a ratio plot with an unsplitted Canvas!" );
       TH1* denom = hm.begin()->second, *numer = nullptr;
@@ -160,9 +160,11 @@ class Canvas : public TCanvas
         Prettify( numer );
         numer->GetYaxis()->SetTitle( Form( "%s%s", ytitle, ( hm.size() > 2 ) ? "s" : "" ) );
       }
-      denom_err->Draw( "e2same" );
-      denom_err->SetFillColor( kBlack );
-      denom_err->SetFillStyle( 3004 );
+      if ( draw_denom_err ) {
+        denom_err->Draw( "e2same" );
+        denom_err->SetFillColor( kBlack );
+        denom_err->SetFillStyle( 3004 );
+      }
 
       if ( xline != kInvalid ) {
         TLine* l = new TLine( denom->GetXaxis()->GetXmin(), xline, denom->GetXaxis()->GetXmax(), xline );
@@ -214,6 +216,7 @@ class Canvas : public TCanvas
         const TString ext_str = dynamic_cast<TObjString*>( tok->At( i ) )->String();
         if ( ext_str == "pdf"
           || ext_str == "png"
+          || ext_str == "root"
           || ext_str == "eps"
           || ext_str == "C" )
           TCanvas::SaveAs( Form( "%s/%s.%s", out_dir, TCanvas::GetName(), ext_str.Data() ) );

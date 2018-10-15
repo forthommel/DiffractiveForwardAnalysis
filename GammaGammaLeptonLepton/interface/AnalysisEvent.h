@@ -31,18 +31,13 @@ namespace ggll
       /// Maximum number of HLT to check
       static constexpr unsigned int MAX_HLT = 10;
       /// Maximum number of leptons per event
-      static constexpr unsigned int MAX_LL = 50;
-      /// Maximum number of muons per event
-      static constexpr unsigned int MAX_MUONS = 25;
-      /// Maximum number of electrons per event
-      static constexpr unsigned int MAX_ELE = 25;
+      static constexpr unsigned int MAX_LL = 200;
       /// Maximum number of photons per event
-      static constexpr unsigned int MAX_PHO = 50;
+      static constexpr unsigned int MAX_PHO = 250;
       /// Maximum number of leptons pairs per event
-      static constexpr unsigned int MAX_PAIRS = 25;
-      static constexpr unsigned int MAX_PAIRPHO = 25;
+      static constexpr unsigned int MAX_PAIRS = 100;
       /// Maximum number of primary vertices per event
-      static constexpr unsigned int MAX_VTX = 150;
+      static constexpr unsigned int MAX_VTX = 300;
       /// Maximum number of extra tracks per event
       static constexpr unsigned int MAX_ET = 1000;
       /// Maximum number of generator level muons per event
@@ -52,11 +47,11 @@ namespace ggll
       /// Maximum number of generator level photons per event
       static constexpr unsigned int MAX_GENPHO = 10;
       /// Maximum number of generator level protons per event
-      static constexpr unsigned int MAX_GENPRO = 8;
+      static constexpr unsigned int MAX_GENPRO = 10;
       /// Maximum number of jets per event
-      static constexpr unsigned int MAX_JETS = 40;
+      static constexpr unsigned int MAX_JETS = 250;
       /// Maximum number of reconstructed local tracks in RPs
-      static constexpr unsigned int MAX_LOCALPCAND = 120;
+      static constexpr unsigned int MAX_LOCALPCAND = 250;
 
       ////// Tree contents //////
 
@@ -67,7 +62,7 @@ namespace ggll
 
       // HLT quantities
       unsigned int nHLT;
-      int HLT_Accept[MAX_HLT], HLT_Prescl[MAX_HLT];
+      int HLT_Accept[MAX_HLT], HLT_Prescl[MAX_HLT], HLT_L1Prescl[MAX_HLT];
       std::vector<std::string>* HLT_Name;
       /*int nHLTLeptonCand[MAX_HLT];
       double HLTLeptonCand_pt[2][MAX_HLT];
@@ -136,10 +131,6 @@ namespace ggll
       double Pair_dpt[MAX_PAIRS], Pair_dphi[MAX_PAIRS], Pair_3Dangle[MAX_PAIRS];
       //double Pair_mindist[MAX_PAIRS];
 
-      unsigned int nPairGamma;
-      int PairGamma_pair[MAX_PHO];
-      double PairGamma_mass[MAX_PHO];
-
       // Extra tracks
       unsigned int Pair_extratracks0p5mm[MAX_PAIRS];
       unsigned int Pair_extratracks1mm[MAX_PAIRS], Pair_extratracks2mm[MAX_PAIRS];
@@ -194,7 +185,7 @@ namespace ggll
         // high-level trigger
         nHLT = 0;
         for ( unsigned int i = 0; i < MAX_HLT; ++i ) {
-          HLT_Accept[i] = HLT_Prescl[i] = -1;
+          HLT_Accept[i] = HLT_L1Prescl[i] = HLT_Prescl[i] = -1;
         }
 
         // gen-level information
@@ -268,13 +259,6 @@ namespace ggll
           //Pair_mindist[i] = -999.;
         }
 
-        // dilepton pair + associated photon candidates
-        nPairGamma = 0;
-        for ( unsigned int i = 0; i < MAX_PHO; ++i ) {
-          PairGamma_pair[i] = -1;
-          PairGamma_mass[i] = -999.;
-        }
-
         // extra tracks associated to the central system vertex
         for ( unsigned int i = 0; i < MAX_PAIRS; ++i ) {
           Pair_extratracks0p5mm[i] = 0;
@@ -342,8 +326,9 @@ namespace ggll
 
         tree->Branch( "nHLT", &nHLT, "nHLT/i" );
         tree->Branch( "HLT_Accept", HLT_Accept, "HLT_Accept[nHLT]/I" );
+        tree->Branch( "HLT_L1Prescl", HLT_L1Prescl, "HLT_L1Prescl[nHLT]/I" );
         tree->Branch( "HLT_Prescl", HLT_Prescl, "HLT_Prescl[nHLT]/I" );
-        tree->Branch( "HLT_Name", &HLT_Name);
+        tree->Branch( "HLT_Name", &HLT_Name );
 
         if ( tt == ElectronMuon || tt == DiMuon ) {
           tree->Branch( "nMuonCand", &nMuonCand, "nMuonCand/i" );
@@ -399,7 +384,7 @@ namespace ggll
           tree->Branch( "EleCand_sigmaIetaIeta", EleCand_sigmaIetaIeta, "EleCand_sigmaIetaIeta[nEleCand]/D" );
           tree->Branch( "EleCand_convDist", EleCand_convDist, "EleCand_convDist[nEleCand]/D" );
           tree->Branch( "EleCand_convDcot", EleCand_convDcot, "EleCand_convDcot[nEleCand]/D" );
-          tree->Branch( "EleCand_ecalDriven", EleCand_ecalDriven, "EleCand_ecalDriven[nEleCand]/D" );
+          tree->Branch( "EleCand_ecalDriven", EleCand_ecalDriven, "EleCand_ecalDriven[nEleCand]/I" );
           tree->Branch( "EleCand_mediumID", EleCand_mediumID, "EleCand_mediumID[nEleCand]/I" );
           tree->Branch( "EleCand_tightID", EleCand_tightID, "EleCand_tightID[nEleCand]/I" );
           tree->Branch( "EleCand_innerTrackPt", EleCand_innerTrackPt, "EleCand_innerTrackPt[nEleCand]/D" );
@@ -480,9 +465,6 @@ namespace ggll
         tree->Branch( "KalmanVertexCand_y", KalmanVertexCand_y, "KalmanVertexCand_y[nPair]/D" );
         tree->Branch( "KalmanVertexCand_z", KalmanVertexCand_z, "KalmanVertexCand_z[nPair]/D" );
 
-        tree->Branch( "nPairGamma", &nPairGamma, "nPairGamma/i" );
-        tree->Branch( "PairGamma_pair", PairGamma_pair, "PairGamma_pair[nPairGamma]/I" );
-        tree->Branch( "PairGamma_mass", PairGamma_mass, "PairGamma_mass[nPairGamma]/D" );
         if ( mc ) {
           tree->Branch( "GenPair_mass", &GenPair_mass, "GenPair_mass/D" );
           tree->Branch( "GenPair_pt", &GenPair_pt, "GenPair_pt/D" );
@@ -558,6 +540,7 @@ namespace ggll
 
         tree->SetBranchAddress( "nHLT", &nHLT );
         tree->SetBranchAddress( "HLT_Accept", HLT_Accept );
+        tree->SetBranchAddress( "HLT_L1Prescl", HLT_L1Prescl );
         tree->SetBranchAddress( "HLT_Prescl", HLT_Prescl );
         tree->SetBranchAddress( "HLT_Name", &HLT_Name );
 
@@ -696,9 +679,6 @@ namespace ggll
         tree->SetBranchAddress( "KalmanVertexCand_y", KalmanVertexCand_y );
         tree->SetBranchAddress( "KalmanVertexCand_z", KalmanVertexCand_z );
 
-        tree->SetBranchAddress( "nPairGamma", &nPairGamma );
-        tree->SetBranchAddress( "PairGamma_pair", PairGamma_pair );
-        tree->SetBranchAddress( "PairGamma_mass", PairGamma_mass );
         if ( mc ) {
           tree->SetBranchAddress( "GenPair_mass", &GenPair_mass );
           tree->SetBranchAddress( "GenPair_pt", &GenPair_pt );

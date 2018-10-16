@@ -392,7 +392,6 @@ GammaGammaLL::lookAtTriggers( const edm::Event& iEvent, const edm::EventSetup& i
   bool changed = true;
   if ( !hltPrescale_.init( iEvent.getRun(), iSetup, triggerResults_.process(), changed ) )
     edm::LogError( "GammaGammaLL" ) << "prescales extraction failure with process name " << triggerResults_.process();
-  std::cout << hltPrescale_.hltConfigProvider().l1tType() << std::endl;
 
   std::ostringstream os;
   os << "Trigger names: " << std::endl;
@@ -414,10 +413,6 @@ GammaGammaLL::lookAtTriggers( const edm::Event& iEvent, const edm::EventSetup& i
       evt_.HLT_Prescl[trigNum] = 1.;
       continue;
     }
-    //if ( hltPrescale_.prescaleSize() == 0 )
-    //  edm::LogError( "GammaGammaLL" ) << "Empty prescales map retrieved for this event.";
-    //else
-    std::cout << i << "::" << trigNum << "::" << hltPrescale_.prescaleValue( iEvent, iSetup, trig_name ) << std::endl;
     evt_.HLT_Prescl[trigNum] = hltPrescale_.prescaleValue( iEvent, iSetup, trig_name );
   }
   LogDebug( "GammaGammaLL" )
